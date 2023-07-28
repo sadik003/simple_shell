@@ -1,85 +1,108 @@
 #include "shell.h"
 
 /**
- *_eputs - prints an input string
- * @str: the string to be printed
+ * rm_newline - Removes the new line from User's input
+ * @line: the line inputted by user
  *
- * Return: Nothing
+ * Return: input without newline
  */
-void _eputs(char *str)
+char *rm_newline(char *line)
 {
-	int i = 0;
+	char *temp = line;
 
-	if (!str)
-		return;
-	while (str[i] != '\0')
-	{
-		_eputchar(str[i]);
-		i++;
-	}
+	temp = strtok(temp, "\n");
+	return (temp);
 }
 
 /**
- * _eputchar - writes the character c to stderr
- * @c: The character to print
+ * parse_input - parses the line entered by the user
+ * @line: the given input
  *
- * Return: On success 1.
- * On error, -1 is returned, and errno is set appropriately.
+ * Return: an array of tokens present in @line
  */
-int _eputchar(char c)
+char **parse_input(char *line)
 {
-	static int i;
-	static char buf[WRITE_BUF_SIZE];
+	char **tokens;
+	char *tok, *temp;
+	int i;
 
-	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	if (!line)
+		return (NULL);
+
+	tokens = malloc(sizeof(char *) * _strlen(line));
+	if (!tokens)
 	{
-		write(2, buf, i);
-		i = 0;
+		perror("Gsh");
+		return (NULL);
 	}
-	if (c != BUF_FLUSH)
-		buf[i++] = c;
+
+	line = rm_newline(line);
+
+	temp = _strdup(line);
+	tok = strtok(temp, " ");
+	for (i = 0; tok; i++)
+	{
+		tokens[i] = _strdup(tok);
+		tok = strtok(NULL, " ");
+	}
+	tokens[i] = NULL;
+
+	free(temp);
+
+	return (tokens);
+}
+
+/**
+ * build_path - build the path to a command
+ * @token: the given command
+ * @value: the path to build for @token
+ *
+ * Return: @value/@token - the path of command
+ */
+char *build_path(char *token, char *value)
+{
+	char *cmd;
+	size_t len;
+
+	len = _strlen(value) + _strlen(token) + 2;
+	cmd = malloc(sizeof(char) * len);
+	if (!cmd)
+		return (NULL);
+	memset(cmd, 0, len);
+
+	cmd = _strcat(cmd, value);
+	cmd = _strcat(cmd, "/");
+	cmd = _strcat(cmd, token);
+
+	return (cmd);
+}
+
+/**
+ * check_cmd_path - check if command is in path
+ * @cmd: an array of command strings
+ *
+ * Return: 0 if found, else 1
+ */
+int check_cmd_path(char **cmd)
+{
+	char *path, *value, *cmd_path;
+	struct stat buf;
+
+	path = _getenv("PATH");
+	value = strtok(path, ":");
+	while (value)
+	{
+		cmd_path = build_path(*cmd, value);
+
+		if (stat(cmd_path, &buf) == 0)
+		{
+			*cmd = _strdup(cmd_path);
+			free(cmd_path);
+			return (0);
+		}
+		free(cmd_path);
+		value = strtok(NULL, ":");
+	}
+
 	return (1);
-}
-
-/**
- * _putfd - writes the character c to given fd
- * @c: The character to print
- * @fd: The filedescriptor to write to
- *
- * Return: On success 1.
- * On error, -1 is returned, and errno is set appropriately.
- */
-int _putfd(char c, int fd)
-{
-	static int i;
-	static char buf[WRITE_BUF_SIZE];
-
-	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
-	{
-		write(fd, buf, i);
-		i = 0;
-	}
-	if (c != BUF_FLUSH)
-		buf[i++] = c;
-	return (1);
-}
-
-/**
- *_putsfd - prints an input string
- * @str: the string to be printed
- * @fd: the filedescriptor to write to
- *
- * Return: the number of chars put
- */
-int _putsfd(char *str, int fd)
-{
-	int i = 0;
-
-	if (!str)
-		return (0);
-	while (*str)
-	{
-		i += _putfd(*str++, fd);
-	}
-	return (i);
 }

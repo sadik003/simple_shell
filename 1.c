@@ -1,74 +1,104 @@
 #include "shell.h"
 
 /**
- * interactive - returns true if shell is interactive mode
- * @info: struct address
+ * is_builtin - checks if a command is a builtin command
+ * @cmd: the given command
  *
- * Return: 1 if interactive mode, 0 otherwise
+ * Return: the position of @cmd in the builtins array, else -1
  */
-int interactive(info_t *info)
+builtin_t is_builtin(char *cmd)
 {
-	return (isatty(STDIN_FILENO) && info->readfd <= 2);
+	builtin_t builtins[] = {
+		{"exit", exit_cmd},
+		{"env", env_cmd},
+		{NULL, NULL}
+	};
+
+	int i;
+
+	for (i = 0; builtins[i].cmd; i++)
+		if (_strcmp(builtins[i].cmd, cmd) == 0)
+			return (builtins[i]);
+
+	return (builtins[i]);
 }
 
 /**
- * is_delim - checks if character is a delimeter
- * @c: the char to check
- * @delim: the delimeter string
- * Return: 1 if true, 0 if false
+ * check_builtins - If command is a builtin command
+ * @cmd: an array of command and its arguments
+ *
+ * Return: the appropriate function to be executed, else NULL
  */
-int is_delim(char c, char *delim)
+int (*check_builtins(char **cmd))(char **, int, char *)
 {
-	while (*delim)
-		if (*delim++ == c)
-			return (1);
+	builtin_t b = is_builtin(cmd[0]);
+
+	if (b.cmd)
+		return (b.f);
+
+	return (NULL);
+}
+
+/**
+ * env_cmd - builtin implementation of env command
+ * @cmd: Unused
+ * @status: the status code
+ *
+ * Return: Always 0
+ */
+int env_cmd(char **cmd, int status, char *filename)
+{
+	int i;
+
+	(void) cmd;
+	(void) status;
+	(void) filename;
+
+	for (i = 0; environ[i]; i++)
+	{
+		print(environ[i]);
+		_putchar('\n');
+	}
 	return (0);
 }
 
 /**
- *_isalpha - checks for alphabetic character
- *@c: The character to input
- *Return: 1 if c is alphabetic, 0 otherwise
+ * exit_cmd - builtin Implementation of exit command
+ * @cmd: an array of given command and its arguments
+ * @status: the status code
+ *
+ * Return: exit with the status code given by user, or
+ * previous execution status code
  */
-
-int _isalpha(int c)
+int exit_cmd(char **cmd, int status, char *filename)
 {
-	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-		return (1);
-	else
-		return (0);
-}
+	int i = 0;
 
-/**
- *_atoi - converts a string to an integer
- *@s: the string to be converted
- *Return: 0 if no numbers in string, converted number otherwise
- */
-
-int _atoi(char *s)
-{
-	int i, sign = 1, flag = 0, output;
-	unsigned int result = 0;
-
-	for (i = 0;  s[i] != '\0' && flag != 2; i++)
+	if (!cmd[1])
 	{
-		if (s[i] == '-')
-			sign *= -1;
-
-		if (s[i] >= '0' && s[i] <= '9')
-		{
-			flag = 1;
-			result *= 10;
-			result += (s[i] - '0');
-		}
-		else if (flag == 1)
-			flag = 2;
+		free_memory_pp(cmd);
+		exit(status);
 	}
 
-	if (sign == -1)
-		output = -result;
-	else
-		output = result;
+	while (cmd[1][i])
+	{
+		if (_isalpha(cmd[1][i]) && cmd[1][i] != '-')
+		{
+			print(filename);
+			print(": ");
+			print(cmd[0]);
+			print(": ");
+			print("Illegal number: ");
+			print(cmd[1]);
+			_putchar('\n');
+			return (1);
+		}
 
-	return (output);
+		i++;
+	}
+
+	status = _atoi(cmd[1]);
+	free_memory_pp(cmd);
+
+	exit(status);
 }

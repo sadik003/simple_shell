@@ -1,1 +1,1 @@
-A replicate of shell
+This is the simple shell project
