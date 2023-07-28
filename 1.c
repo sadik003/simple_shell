@@ -43,6 +43,7 @@ int (*check_builtins(char **cmd))(char **, int, char *)
  * env_cmd - builtin implementation of env command
  * @cmd: Unused
  * @status: the status code
+ * @filename: pointer to the file
  *
  * Return: Always 0
  */
@@ -66,6 +67,7 @@ int env_cmd(char **cmd, int status, char *filename)
  * exit_cmd - builtin Implementation of exit command
  * @cmd: an array of given command and its arguments
  * @status: the status code
+ * @filename: pointer to the file
  *
  * Return: exit with the status code given by user, or
  * previous execution status code
