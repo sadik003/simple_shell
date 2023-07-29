@@ -1,10 +1,7 @@
-#!/bin/bash
-
-# Output file path for the authors file
-AUTHORS="AUTHORS"
+AUTHORS_FILE="AUTHOR"
 
 # Get all unique author names from git commit history
-git log --format='%aN' | sort -u > "$AUTHORS"
+git log --format='%aN' | sort -u > "$AUTHORS_FILE"
 
-echo "Authors file generated: $AUTHORS"
+echo "successfully: $AUTHORS_FILE"
 
